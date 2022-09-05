@@ -1,0 +1,124 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class TIC extends JFrame {
+    JButton[] jb = new JButton[9]; //按钮数构成的棋盘的八个落子点
+    static final char empty = 32;//代表空格
+    static int clicknum = 0;//记录单击次数，决定是走x还是o
+    static final int INFINTY = 100;//带标无穷值
+    static final int WIN = +INFINTY;//o获胜
+    static final int LOSE = -INFINTY;//X获胜
+    static final int DRAW = 0;//平局
+
+    static final int[][] WIN_STATUS = {
+            {0, 1, 2},
+            {3, 4, 5},
+            {6, 7, 8},
+            {0, 3, 6},
+            {1, 4, 7},
+            {2, 5, 8},
+            {0, 4, 8},
+            {2, 4, 6}
+    };
+
+
+    public TIC() {
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setSize(400,400);
+        this.setLayout(new GridLayout(3,3));
+        this.setTitle("井字棋");
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        this.setLocation((screen.height- this.getHeight())/2,(screen.width- this.getWidth())/2);
+
+        for(int i =0; i<9;i++){
+            jb[i] = new JButton("");
+            jb[i].setFont(new Font("Arial",Font.BOLD,30));
+            jb[i].addActionListener(new JBClick());//事件监听
+            this.add(jb[i]);
+        }
+        this.setVisible(true);
+    }
+
+
+    public static void main(String[] args){
+        new TIC();
+        JOptionPane.showMessageDialog(null,"o代表玩家1，x代表玩家2，玩家1先走","提示"
+                ,JOptionPane.DEFAULT_OPTION);
+    }
+
+    private class JBClick implements ActionListener{
+        public void actionPerformed(ActionEvent e){
+            for(int i =0;i<9;i++){
+                if(e.getSource()==jb[i]){//哪个按钮被单击
+                    if(++clicknum % 2 == 0){//偶数次是x
+                        jb[i].setText("X");
+                    }else{
+                        jb[i].setText("O");//奇数次是0
+                    }
+                    jb[i].setEnabled(false);//被单击过的按钮不可用
+                }
+            }
+            int gameState = gameState(jb);
+            switch(gameState){
+                case WIN:
+                    JOptionPane.showMessageDialog(null,"o方获胜","提示"
+                            ,JOptionPane.DEFAULT_OPTION);
+                    break;
+                case LOSE:
+                    JOptionPane.showMessageDialog(null,"x方获胜","提示"
+                            ,JOptionPane.DEFAULT_OPTION);
+                    break;
+                case DRAW:
+                    JOptionPane.showMessageDialog(null,"平局","提示"
+                            ,JOptionPane.DEFAULT_OPTION);
+                    break;
+            }
+
+            if(gameState == WIN ||gameState == LOSE || gameState==DRAW){
+                int over = JOptionPane.showConfirmDialog(null,"是否再来一句","提示",
+                        JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+                if(over == JOptionPane.YES_OPTION){
+                    for(int i = 0;i<9;i++){
+                        jb[i].setText(" ");
+                        jb[i].setEnabled(true);
+                    }
+                }else{
+                    System.exit(0);
+                }
+            }
+        }
+    }
+
+    public int gameState(JButton[] jb) {
+        int result = 1;
+        boolean isFull = true;
+        for (int pos = 0; pos < 9; pos++) {
+            char chess = jb[pos].getText().charAt(0);
+            if (empty == chess) {
+                isFull = false;
+            }
+        }
+        for (int[] status : WIN_STATUS) {
+            char chess = jb[status[0]].getText().charAt(0);
+            if (chess == empty) {
+                continue;
+            }
+            int i;
+            for (i = 1; i < status.length; i++) {
+                if (jb[status[i]].getText().charAt(0) != chess) {
+                    break;
+                }
+            }
+            if (i == status.length) {
+                result = chess == 'O' ? WIN : LOSE;
+                break;
+            }
+        }
+        if (result != WIN & result != LOSE & isFull) {
+            result = DRAW;
+        }
+            return result;
+    }
+}
