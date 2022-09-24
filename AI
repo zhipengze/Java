@@ -1,0 +1,172 @@
+private class JBClick implements ActionListener{
+        public void actionPerformed(ActionEvent e){
+            for(int i =0;i<9;i++){
+                if(e.getSource()==jb[i]){
+                    jb[i].setText("X");
+                    jb[i].setEnabled(false);
+                }
+            }
+            int gameState = gameState(jb);
+            if(!(gameState == WIN ||gameState == LOSE || gameState==DRAW)){
+                int nextpos = getNextMove(jb);
+                jb[nextpos].setText("O");
+                jb[nextpos].setEnabled(false);
+                gameState = gameState(jb);
+
+                switch(gameState){
+                    case WIN:
+                        JOptionPane.showMessageDialog(null,"x方获胜","提示"
+                                ,JOptionPane.DEFAULT_OPTION);
+                        break;
+                    case LOSE:
+                        JOptionPane.showMessageDialog(null,"o方获胜","提示"
+                                ,JOptionPane.DEFAULT_OPTION);
+                        break;
+                    case DRAW:
+                        JOptionPane.showMessageDialog(null,"平局","提示"
+                                ,JOptionPane.DEFAULT_OPTION);
+                        break;
+                }
+
+                if(gameState == WIN ||gameState == LOSE || gameState==DRAW){
+                int over = JOptionPane.showConfirmDialog(null,"是否再来一句","提示",
+                        JOptionPane.YES_NO_OPTION , JOptionPane.QUESTION_MESSAGE);
+                if(over == JOptionPane.YES_OPTION){
+                    for(int i = 0;i<9;i++){
+                        jb[i].setText(" ");
+                        jb[i].setEnabled(true);
+                    }
+                }else{
+                    System.exit(0);
+                }
+            }
+        }
+    }
+
+    public int gameState(JButton[] jb) {
+        int result = INPROGRESS;
+        boolean isFull = true;
+        for (int pos = 0; pos < 9; pos++) {
+            char chess = jb[pos].getText().charAt(0);
+            if (empty == chess) {
+                isFull = false;
+            }
+        }
+        for (int[] status : WIN_STATUS) {
+            char chess = jb[status[0]].getText().charAt(0);
+            if (chess == empty) {
+                continue;
+            }
+            int i;
+            for (i = 1; i < status.length; i++) {
+                if (jb[status[i]].getText().charAt(0) != chess) {
+                    break;
+                }
+            }
+            if (i == status.length) {//三子连线
+                result = chess == 'X' ? WIN : LOSE;
+                break;
+            }
+        }
+        //寻找两连子的情况
+        if (result != WIN & result != LOSE) {
+            if (isFull) {
+                result = DRAW;
+            } else {
+                int[] finds = new int[2];
+                for (int[] status : WIN_STATUS) {
+                    char chess = empty;
+                    boolean hasEmpty = false;
+                    int count = 0;
+                    for (int i = 0; i < status.length; i++) {
+                        if (jb[status[i]].getText().charAt(0) == empty) {
+                            hasEmpty = true;
+                        } else {
+                            if (chess == empty) {
+                                chess = jb[status[i]].getText().charAt(0);
+                            }
+                            if (jb[status[i]].getText().charAt(0) == chess) {
+                                count++;
+                            }
+                        }
+                    }
+                    if (hasEmpty && count > 1) {
+                        if (chess == 'X') {
+                            finds[0]++;
+                        } else {
+                            finds[1]++;
+                        }
+                    }
+                }
+                if (finds[1] > 0) {
+                    result = -DOUBLE_LINK;
+                } else if (finds[0] > 0) {
+                    result = DOUBLE_LINK;
+                }
+            }
+        }
+        return result;
+    }
+    public int getNextMove(JButton[] board){
+            int nextPos = minimax(board,3);
+            return nextPos;
+    }
+
+    public int minimax(JButton[] board, int depth){
+            int[] bestMoves = new int[9];
+            int index = 0;
+            int bestValue = -INFINTY;
+
+            for(int pos = 0; pos<9;pos++){
+                if(board[pos].getText().charAt(0) == empty){
+                    board[pos].setText("X");
+                    int value = min(board,depth);
+                    if(value > bestValue){
+                        bestValue = value;
+                        index=0;
+                        bestMoves[index] = pos;
+                    }else if(value == bestValue){
+                        index++;
+                        bestMoves[index] = pos;
+                    }
+                    board[pos].setText(" ");
+                }
+            }
+            return bestMoves[index];
+    }
+
+    public int min(JButton[] board,int depth){
+            int evalValue = gameState(board);
+            boolean isGameOver = (evalValue == WIN || evalValue == LOSE || evalValue == DRAW);
+            if(depth == 0 || isGameOver){
+                return evalValue;
+            }
+            int bestValue = INFINTY;
+            for(int pos = 0; pos<9;pos++){
+                if(board[pos].getText().charAt(0) == empty){
+                    board[pos].setText("O");
+
+                    bestValue = Math.min(bestValue,max(board,depth-1));
+                    board[pos].setText(" ");
+                }
+            }
+            return evalValue;
+    }
+        public int max(JButton[] board,int depth){
+            int evalValue = gameState(board);
+            boolean isGameOver = (evalValue == WIN || evalValue == LOSE || evalValue == DRAW);
+            if(depth == 0 || isGameOver){
+                return evalValue;
+            }
+            int bestValue = -INFINTY;
+            for(int pos = 0; pos<9;pos++){
+                if(board[pos].getText().charAt(0) == empty){
+                    board[pos].setText("X");
+
+                    bestValue = Math.max(bestValue,min(board,depth-1));
+                    board[pos].setText(" ");
+                }
+            }
+            return evalValue;
+        }
+    }
